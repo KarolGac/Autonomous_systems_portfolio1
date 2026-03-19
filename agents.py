@@ -157,9 +157,11 @@ class WordListEliminationAgent(BaseAgent):
 # ---------------------------------------------------------------------------
 class EntropyAgent(BaseAgent):
     """
-    Picks the letter that maximizes information gain (entropy reduction).
-    For each candidate letter, calculates the entropy of the resulting
-    partition of remaining words.
+    Picks the letter that maximizes information gain (Shannon entropy).
+    Partitions remaining candidates by the positional pattern each letter
+    would reveal, then selects the letter whose partition has the highest
+    entropy.  On the very last life, switches to a survival-weighted score
+    so the agent avoids likely misses that would end the game.
     """
 
     name = "Entropy Agent"
@@ -211,8 +213,7 @@ class EntropyAgent(BaseAgent):
         unknown_positions = [i for i, ch in enumerate(masked) if ch == "_"]
 
         n = len(candidates)
-        best_letter = None
-        best_info_gain = -1.0
+        lives_left = state["max_wrong_guesses"] - state["wrong_guesses"]
 
         # Only consider letters that actually appear in candidates
         candidate_letters = set()
@@ -221,9 +222,11 @@ class EntropyAgent(BaseAgent):
                 if word[i] in remaining:
                     candidate_letters.add(word[i])
 
-        # Also consider letters NOT in any candidate (they'd eliminate all at once — 0 entropy)
-        # We only want letters that create a meaningful split
         letters_to_check = candidate_letters if candidate_letters else remaining
+        miss_pattern = tuple(False for _ in unknown_positions)
+
+        best_letter = None
+        best_score = -float('inf')
 
         for letter in letters_to_check:
             # Partition candidates by the pattern this letter would reveal
@@ -232,15 +235,36 @@ class EntropyAgent(BaseAgent):
                 pattern = self._get_pattern(word, letter, unknown_positions)
                 pattern_counts[pattern] += 1
 
-            # Calculate entropy of the partition
+            # Shannon entropy of the partition
             entropy = 0.0
             for count in pattern_counts.values():
                 if count > 0:
                     p = count / n
                     entropy -= p * math.log2(p)
 
-            if entropy > best_info_gain:
-                best_info_gain = entropy
+            p_miss = pattern_counts.get(miss_pattern, 0) / n
+
+            if lives_left == 1:
+                # Last life: a miss means instant game over.
+                # Score = P(survival) × (1 + information quality among hits)
+                if p_miss >= 1.0:
+                    score = -1.0
+                else:
+                    p_hit = 1.0 - p_miss
+                    n_hit = n - pattern_counts.get(miss_pattern, 0)
+                    hit_entropy = 0.0
+                    for pat, cnt in pattern_counts.items():
+                        if pat != miss_pattern:
+                            p_c = cnt / n_hit
+                            hit_entropy -= p_c * math.log2(p_c)
+                    score = p_hit * (1.0 + hit_entropy)
+            else:
+                # Enough lives: pure entropy maximization.
+                # Tiny P(hit) bonus breaks ties in favour of safer letters.
+                score = entropy + 1e-4 * (1.0 - p_miss)
+
+            if score > best_score:
+                best_score = score
                 best_letter = letter
 
         return best_letter if best_letter else FrequencyAgent().pick_letter(state)

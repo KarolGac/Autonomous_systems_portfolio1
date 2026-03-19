@@ -30,8 +30,9 @@ def load_word_list(path: str = "/usr/share/dict/american-english") -> list[str]:
                 if word.isalpha() and 4 <= len(word) <= 12:
                     words.append(word)
     except FileNotFoundError:
-        # Fallback: small built-in list
+        # Fallback: curated 200-word list for strategy evaluation
         words = [
+            # programming / CS
             "python", "hangman", "strategy", "algorithm", "entropy",
             "baseline", "frequency", "position", "random", "agent",
             "computer", "science", "machine", "learning", "model",
@@ -40,6 +41,57 @@ def load_word_list(path: str = "/usr/share/dict/american-english") -> list[str]:
             "abstract", "binary", "compile", "debug", "execute",
             "function", "global", "integer", "library", "module",
             "object", "pointer", "runtime", "syntax", "variable",
+            "boolean", "cluster", "cipher", "commit", "branch",
+            "deploy", "docker", "server", "socket", "thread",
+            "process", "buffer", "cache", "queue", "stack",
+            "graph", "search", "index", "parse", "token",
+            "lambda", "yield", "async", "class", "method",
+            "import", "export", "struct", "union", "bitwise",
+            "encode", "decode", "signal", "filter", "layer",
+            # nature / science
+            "forest", "jungle", "desert", "arctic", "tundra",
+            "glacier", "volcano", "canyon", "plateau", "valley",
+            "ocean", "river", "marsh", "delta", "spring",
+            "comet", "planet", "galaxy", "nebula", "quasar",
+            "proton", "neutron", "photon", "electron", "plasma",
+            "carbon", "oxygen", "nitrogen", "hydrogen", "helium",
+            "crystal", "mineral", "fossil", "amber", "quartz",
+            "typhoon", "monsoon", "tornado", "blizzard", "drought",
+            # animals
+            "penguin", "dolphin", "panther", "leopard", "cheetah",
+            "gorilla", "buffalo", "flamingo", "peacock", "vulture",
+            "lobster", "octopus", "jellyfish", "hamster", "rabbit",
+            "sparrow", "falcon", "eagle", "parrot", "toucan",
+            "piranha", "salmon", "marlin", "shrimp", "oyster",
+            # everyday / objects
+            "blanket", "candle", "mirror", "carpet", "pillow",
+            "cabinet", "drawer", "lantern", "compass", "ladder",
+            "suitcase", "umbrella", "backpack", "wallet", "helmet",
+            "bicycle", "engine", "rocket", "capsule", "antenna",
+            "battery", "circuit", "magnet", "turbine", "piston",
+            # food / drinks
+            "mango", "papaya", "walnut", "almond", "cashew",
+            "noodle", "spaghetti", "burrito", "pancake", "waffle",
+            "brownie", "custard", "popcorn", "pretzel", "cracker",
+            "mustard", "ketchup", "vinegar", "ginger", "pepper",
+            "espresso", "cappuccino", "lemonade", "smoothie", "cocktail",
+            # places / travel
+            "airport", "harbour", "station", "bridge", "tunnel",
+            "castle", "palace", "pyramid", "temple", "cathedral",
+            "village", "suburb", "island", "peninsula", "fjord",
+            "highway", "avenue", "square", "market", "stadium",
+            # abstract / language
+            "freedom", "justice", "balance", "harmony", "wisdom",
+            "courage", "loyalty", "mystery", "fantasy", "legend",
+            "chapter", "phrase", "grammar", "dialect", "accent",
+            "synonym", "analogy", "paradox", "riddle", "fable",
+            # health / body
+            "muscle", "tissue", "neuron", "artery", "tendon",
+            "vitamin", "protein", "insulin", "hormone", "plasma",
+            # extra variety
+            "lantern", "trumpet", "rhythm", "puzzle", "trophy",
+            "journal", "sketch", "marble", "velvet", "amber",
+            "crimson", "magenta", "silver", "golden", "cobalt",
         ]
     # Deduplicate
     return list(set(words))
@@ -49,7 +101,7 @@ def load_word_list(path: str = "/usr/share/dict/american-english") -> list[str]:
 # Run a single game
 # ---------------------------------------------------------------------------
 def run_game(agent: BaseAgent, secret_word: str, word_list: list[str],
-             max_wrong: int = 6, verbose: bool = False) -> dict:
+             max_wrong: int = 10, verbose: bool = False) -> dict:
     """Play one game of Hangman with the given agent. Return result dict."""
     game = HangmanGame(secret_word, max_wrong_guesses=max_wrong)
 

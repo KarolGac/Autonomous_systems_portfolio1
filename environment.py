@@ -41,7 +41,7 @@ class HangmanEnvironment:
     def __init__(
         self,
         word_list: list[str] | None = None,
-        max_wrong_guesses: int = 8,
+        max_wrong_guesses: int = 10,
         correct_reward: float = 1.0,
         win_reward: float = 10.0,
         wrong_penalty: float = -1.0,
