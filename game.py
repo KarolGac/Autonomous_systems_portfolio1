@@ -1,7 +1,7 @@
-"""Hangman Game Engine."""
+"""Galgje-game."""
 
 class HangmanGame:
-    """Core Hangman game logic."""
+    """Kernlogica van galgje."""
 
     def __init__(self, secret_word: str, max_wrong_guesses: int = 8):
         self.secret_word = secret_word.lower()
@@ -11,7 +11,7 @@ class HangmanGame:
 
     @property
     def masked_word(self) -> str:
-        """Return the word with unguessed letters as underscores."""
+        """Geef het woord terug met underscores voor niet-geraden letters."""
         return "".join(
             ch if ch in self.guessed_letters else "_"
             for ch in self.secret_word
@@ -19,7 +19,7 @@ class HangmanGame:
 
     @property
     def remaining_letters(self) -> list[str]:
-        """Letters that haven't been guessed yet."""
+        """Letters die nog niet zijn geraden."""
         return sorted(set("abcdefghijklmnopqrstuvwxyz") - self.guessed_letters)
 
     @property
@@ -36,16 +36,16 @@ class HangmanGame:
 
     def guess(self, letter: str) -> bool:
         """
-        Guess a letter. Returns True if the letter is in the word.
-        Raises ValueError if letter was already guessed or game is over.
+        Raad een letter. Geeft True als de letter in het woord zit.
+        Geeft ValueError als de letter al geraden is of het spel voorbij is.
         """
         letter = letter.lower()
         if self.is_over:
-            raise ValueError("Game is already over.")
+            raise ValueError("Het spel is al voorbij.")
         if letter in self.guessed_letters:
-            raise ValueError(f"Letter '{letter}' was already guessed.")
+            raise ValueError(f"Letter '{letter}' is al geraden.")
         if letter not in "abcdefghijklmnopqrstuvwxyz":
-            raise ValueError(f"Invalid letter: '{letter}'")
+            raise ValueError(f"Ongeldige letter: '{letter}'")
 
         self.guessed_letters.add(letter)
         if letter in self.secret_word:
@@ -55,7 +55,7 @@ class HangmanGame:
             return False
 
     def get_state(self) -> dict:
-        """Return a snapshot of the current game state."""
+        """Geef een momentopname van de huidige spelstatus terug."""
         return {
             "masked_word": self.masked_word,
             "word_length": len(self.secret_word),

@@ -1,4 +1,4 @@
-"""Hangman Agents: 1 baseline + 4 rule-based strategies."""
+"""Galgje-agents."""
 
 import random
 import math
@@ -7,21 +7,21 @@ from collections import Counter
 
 
 class BaseAgent(ABC):
-    """Abstract base class for all Hangman agents."""
+    """Basisklasse voor alle agents."""
 
     name: str = "BaseAgent"
 
     @abstractmethod
     def pick_letter(self, state: dict, word_list: list[str] | None = None) -> str:
-        """Given the current game state, return the next letter to guess."""
+        """Geef op basis van de spelstatus de volgende letter terug."""
         ...
 
 
 # ---------------------------------------------------------------------------
-# Baseline: Random Agent
+# Willekeurig
 # ---------------------------------------------------------------------------
 class RandomAgent(BaseAgent):
-    """Picks a random letter from the remaining options. Pure baseline."""
+    """Kiest een willekeurige letter uit de overgebleven opties."""
 
     name = "Random Agent"
 
@@ -30,14 +30,14 @@ class RandomAgent(BaseAgent):
 
 
 # ---------------------------------------------------------------------------
-# Agent 1: Frequency Agent
+# Frequentie
 # ---------------------------------------------------------------------------
 class FrequencyAgent(BaseAgent):
-    """Guesses letters in order of English language frequency."""
+    """Raadt letters op basis van Engelse letterfrequentie."""
 
     name = "Frequency Agent"
 
-    # English letter frequency order (most to least common)
+    # Engelse volgorde van letterfrequentie (hoog naar laag)
     FREQ_ORDER = list("etaoinshrdlcumwfgypbvkjxqz")
 
     def pick_letter(self, state: dict, word_list=None) -> str:
@@ -49,12 +49,12 @@ class FrequencyAgent(BaseAgent):
 
 
 # ---------------------------------------------------------------------------
-# Agent 2: Positional Frequency Agent
+# Positie-frequentie
 # ---------------------------------------------------------------------------
 class PositionalFrequencyAgent(BaseAgent):
     """
-    Scores each letter by how often it appears at each UNKNOWN position
-    among words of the same length in the word list.
+    Geeft letters punten op basis van hoe vaak ze staan op onbekende
+    posities in woorden met dezelfde lengte.
     """
 
     name = "Positional Frequency Agent"
@@ -65,18 +65,18 @@ class PositionalFrequencyAgent(BaseAgent):
         word_len = state["word_length"]
 
         if not word_list:
-            # Fallback to simple frequency
+            # Terugval naar simpele frequentie
             return FrequencyAgent().pick_letter(state)
 
-        # Filter words matching length
+        # Filter woorden op gelijke lengte
         candidates = [w for w in word_list if len(w) == word_len]
         if not candidates:
             return FrequencyAgent().pick_letter(state)
 
-        # Find unknown positions
+        # Zoek onbekende posities
         unknown_positions = [i for i, ch in enumerate(masked) if ch == "_"]
 
-        # Score letters by positional frequency at unknown positions
+        # Geef letters punten op onbekende posities
         scores: Counter = Counter()
         for word in candidates:
             for pos in unknown_positions:
@@ -90,18 +90,18 @@ class PositionalFrequencyAgent(BaseAgent):
 
 
 # ---------------------------------------------------------------------------
-# Agent 3: Word List Elimination Agent
+# Woordenlijst-eliminatie
 # ---------------------------------------------------------------------------
 class WordListEliminationAgent(BaseAgent):
     """
-    Maintains a list of possible words. After each guess, eliminates
-    impossible words. Picks the letter occurring in the most remaining words.
+    Houdt een lijst met mogelijke woorden bij. Na elke gok vallen
+    onmogelijke woorden af. Kiest de letter in de meeste overgebleven woorden.
     """
 
     name = "Word List Elimination Agent"
 
     def _filter_candidates(self, candidates: list[str], state: dict) -> list[str]:
-        """Filter word list to only words matching the current game state."""
+        """Filter op woorden die passen bij de huidige spelstatus."""
         masked = state["masked_word"]
         guessed = set(state["guessed_letters"])
         word_len = state["word_length"]
@@ -114,12 +114,12 @@ class WordListEliminationAgent(BaseAgent):
             match = True
             for i, ch in enumerate(masked):
                 if ch != "_":
-                    # Known position: word must have this letter here
+                    # Bekende positie: letter moet hier passen
                     if word[i] != ch:
                         match = False
                         break
                 else:
-                    # Unknown position: word must NOT have a guessed letter here
+                    # Onbekende positie: hier mag geen al gegokte letter staan
                     if word[i] in guessed:
                         match = False
                         break
@@ -140,7 +140,7 @@ class WordListEliminationAgent(BaseAgent):
         if not candidates:
             return FrequencyAgent().pick_letter(state)
 
-        # Pick the letter that appears in the most candidate words
+        # Kies letter die in de meeste kandidaatwoorden voorkomt
         letter_word_count: Counter = Counter()
         for word in candidates:
             unique_letters = set(word) & remaining
@@ -153,21 +153,20 @@ class WordListEliminationAgent(BaseAgent):
 
 
 # ---------------------------------------------------------------------------
-# Agent 4: Entropy / Information Gain Agent
+# Entropie / informatiewinst
 # ---------------------------------------------------------------------------
 class EntropyAgent(BaseAgent):
     """
-    Picks the letter that maximizes information gain (Shannon entropy).
-    Partitions remaining candidates by the positional pattern each letter
-    would reveal, then selects the letter whose partition has the highest
-    entropy.  On the very last life, switches to a survival-weighted score
-    so the agent avoids likely misses that would end the game.
+    Kiest de letter met de meeste informatiewinst (Shannon-entropie).
+    Verdeelt kandidaten op basis van het patroon dat een letter zou tonen
+    en kiest de letter met de hoogste entropie.
+    Bij het laatste leven weegt overleven zwaarder mee.
     """
 
     name = "Entropy Agent"
 
     def _filter_candidates(self, candidates: list[str], state: dict) -> list[str]:
-        """Same filtering as WordListEliminationAgent."""
+        """Zelfde filtering als WordListEliminationAgent."""
         masked = state["masked_word"]
         guessed = set(state["guessed_letters"])
         word_len = state["word_length"]
@@ -192,9 +191,8 @@ class EntropyAgent(BaseAgent):
 
     def _get_pattern(self, word: str, letter: str, unknown_positions: list[int]) -> tuple:
         """
-        Return a tuple showing where 'letter' appears at unknown positions.
-        Only considers positions that are still hidden — this creates
-        a more meaningful partition of remaining words.
+        Geef een tuple terug met waar de letter op onbekende posities staat.
+        Alleen nog verborgen posities tellen mee.
         """
         return tuple(word[i] == letter for i in unknown_positions)
 
@@ -215,7 +213,7 @@ class EntropyAgent(BaseAgent):
         n = len(candidates)
         lives_left = state["max_wrong_guesses"] - state["wrong_guesses"]
 
-        # Only consider letters that actually appear in candidates
+        # Bekijk alleen letters die echt in kandidaten voorkomen
         candidate_letters = set()
         for word in candidates:
             for i in unknown_positions:
@@ -229,13 +227,13 @@ class EntropyAgent(BaseAgent):
         best_score = -float('inf')
 
         for letter in letters_to_check:
-            # Partition candidates by the pattern this letter would reveal
+            # Verdeel kandidaten op basis van het patroon van deze letter
             pattern_counts: Counter = Counter()
             for word in candidates:
                 pattern = self._get_pattern(word, letter, unknown_positions)
                 pattern_counts[pattern] += 1
 
-            # Shannon entropy of the partition
+            # Shannon-entropie van deze verdeling
             entropy = 0.0
             for count in pattern_counts.values():
                 if count > 0:
@@ -245,8 +243,8 @@ class EntropyAgent(BaseAgent):
             p_miss = pattern_counts.get(miss_pattern, 0) / n
 
             if lives_left == 1:
-                # Last life: a miss means instant game over.
-                # Score = P(survival) × (1 + information quality among hits)
+                # Laatste leven: een misser is direct game over.
+                # Score = kans op overleven x (1 + info bij hits)
                 if p_miss >= 1.0:
                     score = -1.0
                 else:
@@ -259,8 +257,8 @@ class EntropyAgent(BaseAgent):
                             hit_entropy -= p_c * math.log2(p_c)
                     score = p_hit * (1.0 + hit_entropy)
             else:
-                # Enough lives: pure entropy maximization.
-                # Tiny P(hit) bonus breaks ties in favour of safer letters.
+                        # Genoeg levens: maximale entropie.
+                        # Kleine hit-bonus breekt gelijke scores.
                 score = entropy + 1e-4 * (1.0 - p_miss)
 
             if score > best_score:
@@ -271,7 +269,7 @@ class EntropyAgent(BaseAgent):
 
 
 # ---------------------------------------------------------------------------
-# Helper: get all agents
+# Helper: geef alle agents
 # ---------------------------------------------------------------------------
 def get_all_agents() -> list[BaseAgent]:
     return [
