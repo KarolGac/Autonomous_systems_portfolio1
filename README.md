@@ -47,9 +47,9 @@ python benchmark.py
 
 ## Resultaten (samenvatting)
 
-- **Kleine woordenlijst** (< 5.000 woorden): Word List Elimination scoort het best
-- **Grote woordenlijst** (> 10.000 woorden): Entropy Agent wint door informatieoptimale splitsing
-- Het centrale inzicht: de agent die zijn onzekerheid het snelst reduceert, wint het vaakst
+- **Kleine woordenlijst** (< 5.000 woorden): Word List Elimination en Entropy Agent presteren gelijkwaardig
+- **Grote woordenlijst** (> 10.000 woorden): Word List Elimination en Entropy Agent presteren gelijkwaardig
+- Het centrale inzicht: beide strategieën gebruiken dezelfde informatie (de kandidatenlijst) en bereiken daarmee hetzelfde prestatieniveau
 
 ## Vereisten
 
